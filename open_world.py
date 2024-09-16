@@ -1,3 +1,8 @@
+# Requires: 
+# - Python 3.11.0
+# - Pygame 2.5.2
+# - PyOpenGL 3.1.7
+
 import pygame
 from pygame.math import Vector3
 from OpenGL.GL import *
@@ -8,8 +13,17 @@ class Player:
         self.pos = Vector3(pos)
         self.rot = Vector3(0, 0, 0)
 
-    def move(self, x, y, z):
-        self.pos += Vector3(x, y, z)
+    def move(self, direction):
+        move_speed = 0.5
+        match direction:
+            case "LEFT":
+                self.pos.x -= move_speed
+            case "RIGHT":
+                self.pos.x += move_speed
+            case "UP":
+                self.pos.z -= move_speed
+            case "DOWN":
+                self.pos.z += move_speed
 
     def rotate(self, x, y, z):
         self.rot += Vector3(x, y, z)
@@ -21,11 +35,12 @@ def setup_lighting():
 
 def draw_ground():
     glBegin(GL_QUADS)
-    glColor3f(0.0, 0.8, 0.0)  # Green color
-    glVertex3f(-10, 0, -10)
-    glVertex3f(-10, 0, 10)
-    glVertex3f(10, 0, 10)
-    glVertex3f(10, 0, -10)
+    glColor3f(0.0, 0.5, 0.0)  # Darker green color
+    ground_size = 1000  # Increased size for "infinite" effect
+    glVertex3f(-ground_size, 0, -ground_size)
+    glVertex3f(-ground_size, 0, ground_size)
+    glVertex3f(ground_size, 0, ground_size)
+    glVertex3f(ground_size, 0, -ground_size)
     glEnd()
 
 def main():
@@ -33,7 +48,7 @@ def main():
     display = (800, 600)
     pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL)
     
-    gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)
+    gluPerspective(45, (display[0] / display[1]), 0.1, 2000.0)  # Increased far clipping plane
     glTranslatef(0.0, -1.0, -10)
     
     player = Player((0, 1, 0))
@@ -50,13 +65,13 @@ def main():
         
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            player.move(-0.1, 0, 0)
+            player.move("LEFT")
         if keys[pygame.K_RIGHT]:
-            player.move(0.1, 0, 0)
+            player.move("RIGHT")
         if keys[pygame.K_UP]:
-            player.move(0, 0, -0.1)
+            player.move("UP")
         if keys[pygame.K_DOWN]:
-            player.move(0, 0, 0.1)
+            player.move("DOWN")
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
