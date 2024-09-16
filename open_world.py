@@ -1,112 +1,72 @@
 import pygame
-from pygame.locals import *
+from pygame.math import Vector3
 from OpenGL.GL import *
 from OpenGL.GLU import *
-import math
-import sys
 
-# Initialize pygame
-pygame.init()
+class Player:
+    def __init__(self, pos):
+        self.pos = Vector3(pos)
+        self.rot = Vector3(0, 0, 0)
 
-# Screen dimensions
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT), DOUBLEBUF | OPENGL)
-pygame.display.set_caption("Pygame with OpenGL")
+    def move(self, x, y, z):
+        self.pos += Vector3(x, y, z)
 
-# OpenGL setup
-glEnable(GL_DEPTH_TEST)
-glMatrixMode(GL_PROJECTION)
-gluPerspective(45, (WIDTH / HEIGHT), 0.1, 50.0)
-glMatrixMode(GL_MODELVIEW)
+    def rotate(self, x, y, z):
+        self.rot += Vector3(x, y, z)
 
-# Player settings
-player_pos = [0, 1, 5]
-player_rot = [0, 0]
-move_speed = 0.1
-mouse_sensitivity = 0.1
+def setup_lighting():
+    glEnable(GL_LIGHTING)
+    glEnable(GL_LIGHT0)
+    glLightfv(GL_LIGHT0, GL_POSITION, (0, 1, 1, 0))
 
 def draw_ground():
     glBegin(GL_QUADS)
-    glColor3f(0.2, 0.8, 0.2)  # Green color
-    for x in range(-10, 10):
-        for z in range(-10, 10):
-            glVertex3f(x, 0, z)
-            glVertex3f(x + 1, 0, z)
-            glVertex3f(x + 1, 0, z + 1)
-            glVertex3f(x, 0, z + 1)
+    glColor3f(0.0, 0.8, 0.0)  # Green color
+    glVertex3f(-10, 0, -10)
+    glVertex3f(-10, 0, 10)
+    glVertex3f(10, 0, 10)
+    glVertex3f(10, 0, -10)
     glEnd()
 
-def handle_mouse_motion():
-    x, y = pygame.mouse.get_pos()
-    dx, dy = x - WIDTH // 2, y - HEIGHT // 2
-    pygame.mouse.set_pos((WIDTH // 2, HEIGHT // 2))
+def main():
+    pygame.init()
+    display = (800, 600)
+    pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL)
     
-    player_rot[0] += dy * mouse_sensitivity
-    player_rot[1] += dx * mouse_sensitivity
-    # Limit the pitch (up/down looking angle)
-    player_rot[0] = max(-90, min(90, player_rot[0]))
+    gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)
+    glTranslatef(0.0, -1.0, -10)
+    
+    player = Player((0, 1, 0))
+    
+    setup_lighting()
+    
+    clock = pygame.time.Clock()
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+        
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            player.move(-0.1, 0, 0)
+        if keys[pygame.K_RIGHT]:
+            player.move(0.1, 0, 0)
+        if keys[pygame.K_UP]:
+            player.move(0, 0, -0.1)
+        if keys[pygame.K_DOWN]:
+            player.move(0, 0, 0.1)
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        
+        glPushMatrix()
+        glTranslate(-player.pos.x, -player.pos.y, -player.pos.z)
+        draw_ground()
+        glPopMatrix()
+        
+        pygame.display.flip()
+        clock.tick(60)
 
-def handle_movement(keys):
-    s = move_speed
-    x, y, z = player_pos
-    sin_y = math.sin(math.radians(player_rot[1]))
-    cos_y = math.cos(math.radians(player_rot[1]))
-
-    if keys[pygame.K_w]:
-        x += s * sin_y
-        z -= s * cos_y
-    if keys[pygame.K_s]:
-        x -= s * sin_y
-        z += s * cos_y
-    if keys[pygame.K_a]:
-        x -= s * cos_y
-        z -= s * sin_y
-    if keys[pygame.K_d]:
-        x += s * cos_y
-        z += s * sin_y
-
-    player_pos[0] = x
-    player_pos[2] = z
-
-# Main loop
-clock = pygame.time.Clock()
-pygame.mouse.set_visible(False)
-pygame.event.set_grab(True)
-running = True
-
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    # Handle mouse movement
-    handle_mouse_motion()
-
-    # Handle keyboard movement
-    keys = pygame.key.get_pressed()
-    handle_movement(keys)
-
-    # OpenGL rendering
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glLoadIdentity()
-
-    # Set the camera
-    gluLookAt(
-        player_pos[0],
-        player_pos[1],
-        player_pos[2],
-        player_pos[0] + math.sin(math.radians(player_rot[1])),
-        player_pos[1] + math.tan(math.radians(player_rot[0])),
-        player_pos[2] - math.cos(math.radians(player_rot[1])),
-        0, 1, 0
-    )
-
-    # Draw the ground
-    draw_ground()
-
-    # Swap the buffers
-    pygame.display.flip()
-    clock.tick(60)
-
-pygame.quit()
-sys.exit()
+if __name__ == "__main__":
+    main()
