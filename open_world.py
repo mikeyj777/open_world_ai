@@ -20,165 +20,11 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
 
-class Player:
-    """
-    Represents the player character in the 3D world.
-    
-    Attributes:
-        pos (Vector3): The position of the player in 3D space.
-        rot (float): The rotation of the player (yaw only).
-    """
+from camera import Camera
+from player import Player
+from graphics import *
 
-    def __init__(self, pos):
-        self.pos = Vector3(pos)
-        self.rot = 0  # Yaw rotation
 
-    def move(self, direction):
-        """
-        Move the player in a given direction, taking into account its current rotation.
-        
-        Args:
-            direction (str): Direction to move ("FORWARD", "BACKWARD", "LEFT", or "RIGHT").
-        """
-        move_speed = 0.2
-        forward = Vector3(math.sin(math.radians(self.rot)), 0, math.cos(math.radians(self.rot)))
-        right = Vector3(forward.z, 0, -forward.x)
-        
-        match direction:
-            case "FORWARD":
-                self.pos += forward * move_speed
-            case "BACKWARD":
-                self.pos -= forward * move_speed
-            case "LEFT":
-                self.pos -= right * move_speed
-            case "RIGHT":
-                self.pos += right * move_speed
-
-    def rotate(self, angle):
-        """
-        Rotate the player.
-        
-        Args:
-            angle (float): Angle to rotate by.
-        """
-        self.rot += angle
-        self.rot %= 360  # Keep rotation between 0 and 359 degrees
-
-class Camera:
-    """
-    Represents the camera in 3D space, following the player.
-    
-    Attributes:
-        distance (float): Distance from the player.
-        height (float): Height above the player.
-        rot_x (float): Vertical rotation (pitch).
-    """
-
-    def __init__(self, distance=5, height=2):
-        self.distance = distance
-        self.height = height
-        self.rot_x = 15  # Initial downward tilt (changed from 30 to 15)
-
-    def rotate(self, dx, dy):
-        """
-        Rotate the camera based on mouse movement or key presses.
-        
-        Args:
-            dx (float): Change in horizontal rotation.
-            dy (float): Change in vertical rotation.
-        """
-        rot_speed = 0.2
-        self.rot_x += dy * rot_speed
-        self.rot_x = max(-90, min(90, self.rot_x))  # Clamp vertical rotation
-
-def setup_lighting():
-    """
-    Set up basic lighting for the 3D scene.
-    """
-    glEnable(GL_LIGHTING)
-    glEnable(GL_LIGHT0)
-    glLightfv(GL_LIGHT0, GL_POSITION, (1, 1, 1, 0))
-    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1))
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, (1, 1, 1, 1))
-
-def draw_ground():
-    """
-    Draw a large green ground plane.
-    """
-    glDisable(GL_LIGHTING)  # Disable lighting for the ground
-    glBegin(GL_QUADS)
-    glColor3f(0.0, 0.5, 0.0)  # Green color
-    ground_size = 1000
-    glVertex3f(-ground_size, -1, -ground_size)
-    glVertex3f(-ground_size, -1, ground_size)
-    glVertex3f(ground_size, -1, ground_size)
-    glVertex3f(ground_size, -1, -ground_size)
-    glEnd()
-    glEnable(GL_LIGHTING)  # Re-enable lighting for other objects
-
-def draw_cube():
-    """
-    Draw a simple cube to represent the player.
-    """
-    glBegin(GL_QUADS)
-    # Front face (red)
-    glColor3f(1.0, 0.0, 0.0)
-    glNormal3f(0, 0, 1)
-    glVertex3f(-0.5, -0.5, 0.5)
-    glVertex3f(0.5, -0.5, 0.5)
-    glVertex3f(0.5, 0.5, 0.5)
-    glVertex3f(-0.5, 0.5, 0.5)
-    # Back face (green)
-    glColor3f(0.0, 1.0, 0.0)
-    glNormal3f(0, 0, -1)
-    glVertex3f(-0.5, -0.5, -0.5)
-    glVertex3f(-0.5, 0.5, -0.5)
-    glVertex3f(0.5, 0.5, -0.5)
-    glVertex3f(0.5, -0.5, -0.5)
-    # Top face (blue)
-    glColor3f(0.0, 0.0, 1.0)
-    glNormal3f(0, 1, 0)
-    glVertex3f(-0.5, 0.5, -0.5)
-    glVertex3f(-0.5, 0.5, 0.5)
-    glVertex3f(0.5, 0.5, 0.5)
-    glVertex3f(0.5, 0.5, -0.5)
-    # Bottom face (yellow)
-    glColor3f(1.0, 1.0, 0.0)
-    glNormal3f(0, -1, 0)
-    glVertex3f(-0.5, -0.5, -0.5)
-    glVertex3f(0.5, -0.5, -0.5)
-    glVertex3f(0.5, -0.5, 0.5)
-    glVertex3f(-0.5, -0.5, 0.5)
-    # Right face (magenta)
-    glColor3f(1.0, 0.0, 1.0)
-    glNormal3f(1, 0, 0)
-    glVertex3f(0.5, -0.5, -0.5)
-    glVertex3f(0.5, 0.5, -0.5)
-    glVertex3f(0.5, 0.5, 0.5)
-    glVertex3f(0.5, -0.5, 0.5)
-    # Left face (cyan)
-    glColor3f(0.0, 1.0, 1.0)
-    glNormal3f(-1, 0, 0)
-    glVertex3f(-0.5, -0.5, -0.5)
-    glVertex3f(-0.5, -0.5, 0.5)
-    glVertex3f(-0.5, 0.5, 0.5)
-    glVertex3f(-0.5, 0.5, -0.5)
-    glEnd()
-
-def render_text(text, x, y):
-    """
-    Render text on the screen using Pygame.
-    
-    Args:
-        text (str): Text to render.
-        x (int): X-coordinate for text position.
-        y (int): Y-coordinate for text position.
-    """
-    font = pygame.font.Font(None, 36)
-    text_surface = font.render(text, True, (255, 255, 255))
-    text_data = pygame.image.tostring(text_surface, "RGBA", True)
-    glWindowPos2d(x, y)
-    glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
 
 def main():
     """
@@ -234,10 +80,10 @@ def main():
         glRotatef(-camera.rot_x, 1, 0, 0)
         glRotatef(-player.rot, 0, 1, 0)
         camera_pos = player.pos - Vector3(math.sin(math.radians(player.rot)), 0, math.cos(math.radians(player.rot))) * camera.distance
-        camera_pos.y = player.pos.y + camera.height  # Adjusted to maintain proper view
+        camera_pos.y = player.pos.y + camera.height
         glTranslatef(-camera_pos.x, -camera_pos.y, -camera_pos.z)
         
-        draw_ground()
+        draw_ground()  # This now includes the grid
         
         glPushMatrix()
         glTranslatef(player.pos.x, player.pos.y, player.pos.z)
