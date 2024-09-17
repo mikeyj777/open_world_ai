@@ -1,19 +1,3 @@
-"""
-3D Open World Simulation using Pygame and OpenGL
-
-This script creates a simple 3D open world with a flat green ground,
-featuring a third-person view of a player character and a coordinate display.
-
-Recent changes:
-1. Adjusted initial camera angle to point just above the player's position.
-2. Modified camera position calculation to maintain proper view regardless of player's y-position.
-
-Requirements:
-- Python 3.11.0
-- Pygame 2.5.2
-- PyOpenGL 3.1.7
-"""
-
 import pygame
 from pygame.math import Vector3
 from OpenGL.GL import *
@@ -22,14 +6,9 @@ import math
 
 from camera import Camera
 from player import Player
-from graphics import *
-
-
+from graphics import setup_lighting, draw_ground, draw_grid, draw_cube, render_text
 
 def main():
-    """
-    Main function to set up and run the 3D world simulation.
-    """
     pygame.init()
     display = (800, 600)
     pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL)
@@ -83,7 +62,8 @@ def main():
         camera_pos.y = player.pos.y + camera.height
         glTranslatef(-camera_pos.x, -camera_pos.y, -camera_pos.z)
         
-        draw_ground()  # This now includes the grid
+        draw_ground()
+        draw_grid(player.pos)  # Pass player position to draw_grid
         
         glPushMatrix()
         glTranslatef(player.pos.x, player.pos.y, player.pos.z)
