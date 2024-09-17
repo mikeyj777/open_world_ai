@@ -3,6 +3,8 @@ from OpenGL.GL import *
 import math
 import time
 
+from agent import Agent
+
 def setup_lighting():
     glEnable(GL_LIGHTING)
     glEnable(GL_LIGHT0)
@@ -159,7 +161,7 @@ def animate_agent(agent, player, radius=40):
     agent.pos.z = z
     agent.pos.y = player.pos.y  # Keep the same y-coordinate as the player
 
-def draw_scene(player, camera, agent):
+def draw_scene(player, camera, agents):
     """
     Draw the entire scene including ground, grid, player, and agent.
     
@@ -185,8 +187,9 @@ def draw_scene(player, camera, agent):
     glRotatef(-player.rot, 0, 1, 0)
     draw_cube()
     glPopMatrix()
-    
-    animate_agent(agent, player)
-    agent.draw()
+    agent:Agent
+    for agent in agents:
+        agent._move(dt=0.1)
+        agent.draw()
     
     glPopMatrix()

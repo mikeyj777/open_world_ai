@@ -3,45 +3,29 @@ from pygame.math import Vector3
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
+import random
 
 from camera import Camera
-from player import Player
 from agent import Agent
-from graphics import setup_lighting, draw_scene, render_text
+from graphics import setup_lighting, render_text
 from consts import Consts
+
+# ... (previous functions remain the same)
 
 def main():
     """
-    Main function to set up and run the 3D world simulation.
-
-    This function initializes Pygame and OpenGL, creates the player, camera, and agent,
-    and runs the main game loop. It handles user input for player movement,
-    camera control, and rendering the 3D world including the animated agent.
-
-    Coordinate system:
-    - Positive X: right
-    - Positive Y: up
-    - Positive Z: forward (into the screen/field of view)
-
-    Controls:
-    - W/A/S/D: Move player forward/left/backward/right
-    - Left/Right arrows: Rotate player
-    - Up/Down arrows: Rotate camera vertically (normal view only)
-    - Left/Right arrows (when not moving player): Rotate camera horizontally (normal view only)
-    - Shift + Up/Down arrows: Zoom camera in/out
-    - C: Reset camera to initial position and orientation
-    - T: Toggle between normal and top-down view
+    Main function to set up and run the 3D world simulation with multiple agents.
     """
     pygame.init()
     display = (800, 600)
     pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL)
     
-    player = Player((0, 0, 0))
     camera = Camera()
-    agent = Agent((0, 0, 40))
+    camera.update_projection()  # Set initial projection
+    
+    agents = create_initial_agents(50)  # Start with 50 agents
     
     setup_lighting()
-    camera.update_projection()  # Set initial projection
     
     clock = pygame.time.Clock()
     
@@ -52,28 +36,12 @@ def main():
                 return
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_c:
-                    camera.reset()  # Reset camera when 'C' is pressed
+                    camera.reset()
                 elif event.key == pygame.K_t:
-                    camera.toggle_top_down()  # Toggle top-down view when 'T' is pressed
+                    camera.toggle_top_down()
 
         keys = pygame.key.get_pressed()
         mods = pygame.key.get_mods()
-        
-        # Handle player movement
-        if keys[pygame.K_w]:
-            player.move("FORWARD")
-        if keys[pygame.K_s]:
-            player.move("BACKWARD")
-        if keys[pygame.K_a]:
-            player.move("LEFT")
-        if keys[pygame.K_d]:
-            player.move("RIGHT")
-        
-        # Handle player rotation
-        if keys[pygame.K_LEFT]:
-            player.rotate(-1)
-        if keys[pygame.K_RIGHT]:
-            player.rotate(1)
         
         # Handle camera rotation and zoom
         if mods & pygame.KMOD_SHIFT:
@@ -81,7 +49,7 @@ def main():
                 camera.zoom(-2)  # Zoom in
             elif keys[pygame.K_DOWN]:
                 camera.zoom(2)  # Zoom out
-        elif not camera.top_down:  # Only allow rotation in normal view
+        else:
             if keys[pygame.K_UP]:
                 camera.rotate(0, -1)  # Rotate camera vertically
             elif keys[pygame.K_DOWN]:
@@ -91,15 +59,35 @@ def main():
             elif keys[pygame.K_RIGHT]:
                 camera.rotate(1, 0)  # Rotate camera horizontally
         
-        draw_scene(player, camera, agent)
+        dt = clock.tick(60) / 1000.0  # Get time since last frame in seconds
         
-        # Render coordinate display
-        view_mode = "Top-Down" if camera.top_down else "Normal"
-        coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f} Rot: {player.rot:.2f} FOV: {camera.fov:.1f} View: {view_mode}"
-        render_text(coords, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
+        # Update and manage agents
+        check_and_create_connections(agents)
+        agents = update_agents(agents, dt)
+        
+        # Render the scene
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        
+        glPushMatrix()
+        # Position and rotate the camera
+        glRotatef(-camera.rot_x, 1, 0, 0)
+        glRotatef(-camera.rot_y, 0, 1, 0)
+        camera_pos = camera.get_position(Vector3(0, 0, 0))  # Assuming camera follows a point at (0,0,0)
+        glTranslatef(-camera_pos[0], -camera_pos[1], -camera_pos[2])
+        
+        # Draw all agents and their connections
+        for agent in agents:
+            agent.draw()
+        for agent in agents:
+            agent.draw_connections()
+        
+        glPopMatrix()
+        
+        # Render information display
+        info = f"Agents: {len(agents)} | FPS: {clock.get_fps():.2f}"
+        render_text(info, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
         
         pygame.display.flip()
-        clock.tick(60)
 
 if __name__ == "__main__":
     main()
