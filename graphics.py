@@ -1,6 +1,7 @@
 import pygame
 from OpenGL.GL import *
 import math
+import time
 
 def setup_lighting():
     glEnable(GL_LIGHTING)
@@ -135,3 +136,57 @@ def render_text(text, x, y):
     
     # Re-enable lighting
     glEnable(GL_LIGHTING)
+
+def animate_agent(agent, player, radius=40):
+    """
+    Animate the agent in a circular path around the player.
+    
+    Args:
+        agent (Agent): The agent to animate.
+        player (Player): The player to circle around.
+        radius (float): The radius of the circular path.
+    """
+    # Calculate the elapsed time
+    current_time = time.time()
+    elapsed_time = current_time % (2 * math.pi)  # Complete a circle every 2π seconds
+    
+    # Calculate new position
+    x = player.pos.x + radius * math.cos(elapsed_time)
+    z = player.pos.z + radius * math.sin(elapsed_time)
+    
+    # Update agent position
+    agent.pos.x = x
+    agent.pos.z = z
+    agent.pos.y = player.pos.y  # Keep the same y-coordinate as the player
+
+def draw_scene(player, camera, agent):
+    """
+    Draw the entire scene including ground, grid, player, and agent.
+    
+    Args:
+        player (Player): The player object.
+        camera (Camera): The camera object.
+        agent (Agent): The agent object.
+    """
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    
+    glPushMatrix()
+    # Position and rotate the camera
+    glRotatef(-camera.rot_x, 1, 0, 0)
+    glRotatef(-camera.rot_y, 0, 1, 0)
+    camera_pos = camera.get_position(player.pos)
+    glTranslatef(-camera_pos[0], -camera_pos[1], -camera_pos[2])
+    
+    draw_ground()
+    draw_grid(player.pos)
+    
+    glPushMatrix()
+    glTranslatef(player.pos.x, player.pos.y, player.pos.z)
+    glRotatef(-player.rot, 0, 1, 0)
+    draw_cube()
+    glPopMatrix()
+    
+    animate_agent(agent, player)
+    agent.draw()
+    
+    glPopMatrix()

@@ -7,7 +7,7 @@ import math
 from camera import Camera
 from player import Player
 from agent import Agent
-from graphics import setup_lighting, draw_ground, draw_grid, draw_cube, render_text
+from graphics import setup_lighting, draw_scene, render_text
 from consts import Consts
 
 def main():
@@ -16,7 +16,7 @@ def main():
 
     This function initializes Pygame and OpenGL, creates the player, camera, and agent,
     and runs the main game loop. It handles user input for player movement,
-    camera control, and rendering the 3D world including the agent.
+    camera control, and rendering the 3D world including the animated agent.
 
     Coordinate system:
     - Positive X: right
@@ -39,7 +39,6 @@ def main():
     
     player = Player((0, 0, 0))
     camera = Camera()
-    # Place the agent 40 units away on the z-axis (4 grid squares in front) and centered on x-axis
     agent = Agent((0, 0, -40))
     
     setup_lighting()
@@ -90,27 +89,7 @@ def main():
             elif keys[pygame.K_RIGHT]:
                 camera.rotate(1, 0)  # Rotate camera horizontally
         
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
-        glPushMatrix()
-        # Position and rotate the camera
-        glRotatef(-camera.rot_x, 1, 0, 0)
-        glRotatef(-camera.rot_y, 0, 1, 0)
-        camera_pos = camera.get_position(player.pos)
-        glTranslatef(-camera_pos[0], -camera_pos[1], -camera_pos[2])
-        
-        draw_ground()
-        draw_grid(player.pos)
-        
-        glPushMatrix()
-        glTranslatef(player.pos.x, player.pos.y, player.pos.z)
-        glRotatef(-player.rot, 0, 1, 0)
-        draw_cube()
-        glPopMatrix()
-        
-        agent.draw()  # Draw the agent
-        
-        glPopMatrix()
+        draw_scene(player, camera, agent)
         
         # Render coordinate display
         coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f} Rot: {player.rot:.2f}"

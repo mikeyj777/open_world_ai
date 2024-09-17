@@ -14,8 +14,10 @@ class Camera:
         min_distance (float): Minimum zoom distance.
         max_distance (float): Maximum zoom distance.
 
-    Changes:
-        - Updated reset method to align view with z-axis.
+    Coordinate system:
+    - Positive X: right
+    - Positive Y: up
+    - Positive Z: forward (into the screen/field of view)
     """
 
     def __init__(self, distance=5, height=2):
@@ -24,9 +26,9 @@ class Camera:
         self.distance = distance
         self.height = height
         self.rot_x = 15  # Initial downward tilt
-        self.rot_y = 0   # Initial horizontal rotation (facing negative z-axis)
+        self.rot_y = 0   # Initial horizontal rotation (facing positive z-axis)
         self.min_distance = 3  # Minimum zoom distance
-        self.max_distance = 20  # Maximum zoom distance
+        self.max_distance = 200  # Maximum zoom distance
 
     def rotate(self, dx, dy):
         """
@@ -54,12 +56,12 @@ class Camera:
 
     def reset(self):
         """
-        Reset the camera to its initial state and align with z-axis.
+        Reset the camera to its initial state and align with positive z-axis.
         """
         self.distance = self.initial_distance
         self.height = self.initial_height
         self.rot_x = 15  # Slight downward tilt
-        self.rot_y = 0   # Facing negative z-axis (forward in OpenGL)
+        self.rot_y = 0   # Facing positive z-axis (forward)
 
     def get_position(self, player_pos):
         """
