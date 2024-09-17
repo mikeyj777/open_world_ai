@@ -14,6 +14,8 @@ class Camera:
         fov (float): Field of view in degrees.
         min_fov (float): Minimum field of view.
         max_fov (float): Maximum field of view.
+        top_down (bool): Whether the camera is in top-down view mode.
+        top_down_height (float): Height of the camera in top-down view.
 
     Coordinate system:
     - Positive X: right
@@ -29,27 +31,24 @@ class Camera:
         self.fov = 45.0
         self.min_fov = 10.0
         self.max_fov = 120.0
+        self.top_down = False
+        self.top_down_height = 100  # Height for top-down view
 
     def rotate(self, dx, dy):
         """
         Rotate the camera based on mouse movement or key presses.
-        
-        Args:
-            dx (float): Change in horizontal rotation.
-            dy (float): Change in vertical rotation.
+        Only applies in normal view mode.
         """
-        rot_speed = 0.2
-        self.rot_x += dy * rot_speed
-        self.rot_y += dx * rot_speed
-        self.rot_x = max(-90, min(90, self.rot_x))  # Clamp vertical rotation
-        self.rot_y %= 360  # Keep horizontal rotation between 0 and 359 degrees
+        if not self.top_down:
+            rot_speed = 0.2
+            self.rot_x += dy * rot_speed
+            self.rot_y += dx * rot_speed
+            self.rot_x = max(-90, min(90, self.rot_x))  # Clamp vertical rotation
+            self.rot_y %= 360  # Keep horizontal rotation between 0 and 359 degrees
 
     def zoom(self, amount):
         """
         Adjust the camera's zoom level by changing the field of view.
-
-        Args:
-            amount (float): The amount to zoom in (negative) or out (positive).
         """
         self.fov += amount
         self.fov = max(self.min_fov, min(self.max_fov, self.fov))
@@ -73,7 +72,19 @@ class Camera:
         self.rot_x = 15  # Slight downward tilt
         self.rot_y = 0   # Facing positive z-axis (forward)
         self.fov = 45.0
+        self.top_down = False
         self.update_projection()
+
+    def toggle_top_down(self):
+        """
+        Toggle between normal view and top-down view.
+        """
+        self.top_down = not self.top_down
+        if self.top_down:
+            self.rot_x = -90  # Look straight down
+            self.rot_y = 0
+        else:
+            self.reset()  # Return to normal view
 
     def get_position(self, player_pos):
         """
@@ -85,8 +96,11 @@ class Camera:
         Returns:
             tuple: The camera's position (x, y, z).
         """
-        angle_y = math.radians(self.rot_y)
-        camera_x = player_pos[0] - self.distance * math.sin(angle_y)
-        camera_y = player_pos[1] + self.height
-        camera_z = player_pos[2] - self.distance * math.cos(angle_y)
-        return (camera_x, camera_y, camera_z)
+        if self.top_down:
+            return (player_pos[0], player_pos[1] + self.top_down_height, player_pos[2])
+        else:
+            angle_y = math.radians(self.rot_y)
+            camera_x = player_pos[0] - self.distance * math.sin(angle_y)
+            camera_y = player_pos[1] + self.height
+            camera_z = player_pos[2] - self.distance * math.cos(angle_y)
+            return (camera_x, camera_y, camera_z)

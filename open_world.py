@@ -26,10 +26,11 @@ def main():
     Controls:
     - W/A/S/D: Move player forward/left/backward/right
     - Left/Right arrows: Rotate player
-    - Up/Down arrows: Rotate camera vertically
-    - Left/Right arrows (when not moving player): Rotate camera horizontally
+    - Up/Down arrows: Rotate camera vertically (normal view only)
+    - Left/Right arrows (when not moving player): Rotate camera horizontally (normal view only)
     - Shift + Up/Down arrows: Zoom camera in/out
     - C: Reset camera to initial position and orientation
+    - T: Toggle between normal and top-down view
     """
     pygame.init()
     display = (800, 600)
@@ -37,7 +38,7 @@ def main():
     
     player = Player((0, 0, 0))
     camera = Camera()
-    agent = Agent((0, 0, -40))
+    agent = Agent((0, 0, 40))
     
     setup_lighting()
     camera.update_projection()  # Set initial projection
@@ -52,6 +53,8 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_c:
                     camera.reset()  # Reset camera when 'C' is pressed
+                elif event.key == pygame.K_t:
+                    camera.toggle_top_down()  # Toggle top-down view when 'T' is pressed
 
         keys = pygame.key.get_pressed()
         mods = pygame.key.get_mods()
@@ -78,7 +81,7 @@ def main():
                 camera.zoom(-2)  # Zoom in
             elif keys[pygame.K_DOWN]:
                 camera.zoom(2)  # Zoom out
-        else:
+        elif not camera.top_down:  # Only allow rotation in normal view
             if keys[pygame.K_UP]:
                 camera.rotate(0, -1)  # Rotate camera vertically
             elif keys[pygame.K_DOWN]:
@@ -91,7 +94,8 @@ def main():
         draw_scene(player, camera, agent)
         
         # Render coordinate display
-        coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f} Rot: {player.rot:.2f} FOV: {camera.fov:.1f}"
+        view_mode = "Top-Down" if camera.top_down else "Normal"
+        coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f} Rot: {player.rot:.2f} FOV: {camera.fov:.1f} View: {view_mode}"
         render_text(coords, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
         
         pygame.display.flip()
