@@ -5,9 +5,8 @@ This script creates a simple 3D open world with a flat green ground,
 featuring a third-person view of a player character and a coordinate display.
 
 Recent changes:
-1. Removed GLUT dependencies.
-2. Replaced player sphere representation with a simple cube using basic OpenGL commands.
-3. Adjusted lighting to better illuminate the player cube.
+1. Adjusted initial camera angle to point just above the player's position.
+2. Modified camera position calculation to maintain proper view regardless of player's y-position.
 
 Requirements:
 - Python 3.11.0
@@ -78,7 +77,7 @@ class Camera:
     def __init__(self, distance=5, height=2):
         self.distance = distance
         self.height = height
-        self.rot_x = 30  # Initial downward tilt
+        self.rot_x = 15  # Initial downward tilt (changed from 30 to 15)
 
     def rotate(self, dx, dy):
         """
@@ -176,7 +175,7 @@ def render_text(text, x, y):
         y (int): Y-coordinate for text position.
     """
     font = pygame.font.Font(None, 36)
-    text_surface = font.render(text, True, (255, 0, 0))
+    text_surface = font.render(text, True, (255, 255, 255))
     text_data = pygame.image.tostring(text_surface, "RGBA", True)
     glWindowPos2d(x, y)
     glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
@@ -199,14 +198,11 @@ def main():
     clock = pygame.time.Clock()
     
     while True:
-        i = -1
         for event in pygame.event.get():
-            i += 1
-            print(f'{i}: {event}')
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
-        # print('\n\n-------------------\n\n')
+        
         keys = pygame.key.get_pressed()
         
         # Handle player movement
@@ -238,7 +234,7 @@ def main():
         glRotatef(-camera.rot_x, 1, 0, 0)
         glRotatef(-player.rot, 0, 1, 0)
         camera_pos = player.pos - Vector3(math.sin(math.radians(player.rot)), 0, math.cos(math.radians(player.rot))) * camera.distance
-        camera_pos.y = camera.height
+        camera_pos.y = player.pos.y + camera.height  # Adjusted to maintain proper view
         glTranslatef(-camera_pos.x, -camera_pos.y, -camera_pos.z)
         
         draw_ground()
