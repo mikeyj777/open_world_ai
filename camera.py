@@ -11,26 +11,20 @@ class Camera:
         rot_y (float): Horizontal rotation (yaw).
         initial_distance (float): Initial distance from the player.
         initial_height (float): Initial height above the player.
-        initial_rot_x (float): Initial vertical rotation.
-        initial_rot_y (float): Initial horizontal rotation.
         min_distance (float): Minimum zoom distance.
         max_distance (float): Maximum zoom distance.
 
     Changes:
-        - Updated get_position method to work with inverted z-coordinate system.
-        - Updated docstring to reflect the new coordinate system.
+        - Updated reset method to align view with z-axis.
     """
 
     def __init__(self, distance=5, height=2):
         self.initial_distance = distance
         self.initial_height = height
-        self.initial_rot_x = 15  # Initial downward tilt
-        self.initial_rot_y = 0  # Initial horizontal rotation
-
         self.distance = distance
         self.height = height
-        self.rot_x = self.initial_rot_x
-        self.rot_y = self.initial_rot_y
+        self.rot_x = 15  # Initial downward tilt
+        self.rot_y = 0   # Initial horizontal rotation (facing negative z-axis)
         self.min_distance = 3  # Minimum zoom distance
         self.max_distance = 20  # Maximum zoom distance
 
@@ -60,21 +54,16 @@ class Camera:
 
     def reset(self):
         """
-        Reset the camera to its initial state and align with world axes.
+        Reset the camera to its initial state and align with z-axis.
         """
         self.distance = self.initial_distance
         self.height = self.initial_height
-        self.rot_x = self.initial_rot_x
-        self.rot_y = self.initial_rot_y
+        self.rot_x = 15  # Slight downward tilt
+        self.rot_y = 0   # Facing negative z-axis (forward in OpenGL)
 
     def get_position(self, player_pos):
         """
         Calculate the camera's position based on player position and camera attributes.
-
-        The coordinate system is now:
-        - Positive X: right
-        - Positive Y: up
-        - Positive Z: forward (into the screen)
 
         Args:
             player_pos (Vector3): The player's position.

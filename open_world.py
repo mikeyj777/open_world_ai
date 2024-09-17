@@ -6,6 +6,7 @@ import math
 
 from camera import Camera
 from player import Player
+from agent import Agent
 from graphics import setup_lighting, draw_ground, draw_grid, draw_cube, render_text
 from consts import Consts
 
@@ -13,9 +14,20 @@ def main():
     """
     Main function to set up and run the 3D world simulation.
 
-    This function initializes Pygame and OpenGL, creates the player and camera,
+    This function initializes Pygame and OpenGL, creates the player, camera, and agent,
     and runs the main game loop. It handles user input for player movement,
-    camera control, and rendering the 3D world.
+    camera control, and rendering the 3D world including the agent.
+
+    Controls:
+    - W/A/S/D: Move player forward/left/backward/right
+    - Left/Right arrows: Rotate player
+    - Up/Down arrows: Rotate camera vertically
+    - Left/Right arrows (when not moving player): Rotate camera horizontally
+    - Shift + Up/Down arrows: Zoom camera in/out
+    - C: Reset camera to initial position and orientation
+
+    Changes:
+    - Adjusted the initial position of the agent to be visible in the starting view.
     """
     pygame.init()
     display = (800, 600)
@@ -25,6 +37,8 @@ def main():
     
     player = Player((0, 0, 0))
     camera = Camera()
+    # Place the agent 40 units away on the z-axis (4 grid squares) and centered on x-axis
+    agent = Agent((0, 0, 40))
     
     setup_lighting()
     
@@ -64,15 +78,15 @@ def main():
                 camera.zoom(0.1)  # Zoom out
             elif keys[pygame.K_DOWN]:
                 camera.zoom(-0.1)  # Zoom in
-            elif keys[pygame.K_LEFT]:
-                camera.rotate(-1, 0)  # Rotate camera horizontally
-            elif keys[pygame.K_RIGHT]:
-                camera.rotate(1, 0)  # Rotate camera horizontally
         else:
             if keys[pygame.K_UP]:
                 camera.rotate(0, -1)  # Rotate camera vertically
             elif keys[pygame.K_DOWN]:
                 camera.rotate(0, 1)  # Rotate camera vertically
+            elif keys[pygame.K_LEFT]:
+                camera.rotate(-1, 0)  # Rotate camera horizontally
+            elif keys[pygame.K_RIGHT]:
+                camera.rotate(1, 0)  # Rotate camera horizontally
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
@@ -91,6 +105,8 @@ def main():
         glRotatef(-player.rot, 0, 1, 0)
         draw_cube()
         glPopMatrix()
+        
+        agent.draw()  # Draw the agent
         
         glPopMatrix()
         
