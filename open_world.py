@@ -1,16 +1,17 @@
+import random
+import math
+
 import pygame
 from pygame.math import Vector3
 from OpenGL.GL import *
 from OpenGL.GLU import *
-import math
-import random
+
 
 from camera import Camera
+from player import Player
 from agent import Agent
-from graphics import setup_lighting, render_text
+from graphics import setup_lighting, draw_scene, render_text
 from consts import Consts
-
-# ... (previous functions remain the same)
 
 def main():
     """
