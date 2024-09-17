@@ -75,7 +75,7 @@ def main():
         
         # Render coordinate display
         coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f}"
-        render_text(coords, 10, display[1] - 40)
+        render_text(coords, 10, 60)
         
         pygame.display.flip()
         clock.tick(60)

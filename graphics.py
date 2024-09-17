@@ -96,7 +96,42 @@ def draw_cube():
 
 def render_text(text, x, y):
     font = pygame.font.Font(None, 36)
-    text_surface = font.render(text, True, (255, 255, 255))
-    text_data = pygame.image.tostring(text_surface, "RGBA", True)
-    glWindowPos2d(x, y)
-    glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+    text_surface = font.render(text, True, (0, 0, 0))  # Black text
+    text_rect = text_surface.get_rect()
+    
+    # Create a white background surface
+    background_surface = pygame.Surface((text_rect.width + 10, text_rect.height + 10))
+    background_surface.fill((255, 255, 255))  # White color
+    
+    # Blit the text onto the background
+    background_surface.blit(text_surface, (5, 5))
+    
+    # Convert the entire surface (background + text) to a string
+    surface_data = pygame.image.tostring(background_surface, "RGBA", True)
+    
+    # Save the current matrix
+    glPushMatrix()
+    
+    # Switch to 2D rendering
+    glMatrixMode(GL_PROJECTION)
+    glPushMatrix()
+    glLoadIdentity()
+    glOrtho(0.0, pygame.display.get_surface().get_width(), pygame.display.get_surface().get_height(), 0.0, -1.0, 1.0)
+    glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
+    
+    # Disable lighting for 2D rendering
+    glDisable(GL_LIGHTING)
+    
+    # Render the text
+    glRasterPos2i(x, y)
+    glDrawPixels(background_surface.get_width(), background_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, surface_data)
+    
+    # Restore the matrices
+    glMatrixMode(GL_PROJECTION)
+    glPopMatrix()
+    glMatrixMode(GL_MODELVIEW)
+    glPopMatrix()
+    
+    # Re-enable lighting
+    glEnable(GL_LIGHTING)
