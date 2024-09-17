@@ -18,6 +18,11 @@ def main():
     and runs the main game loop. It handles user input for player movement,
     camera control, and rendering the 3D world including the agent.
 
+    Coordinate system:
+    - Positive X: right
+    - Positive Y: up
+    - Positive Z: forward (into the screen/field of view)
+
     Controls:
     - W/A/S/D: Move player forward/left/backward/right
     - Left/Right arrows: Rotate player
@@ -25,9 +30,6 @@ def main():
     - Left/Right arrows (when not moving player): Rotate camera horizontally
     - Shift + Up/Down arrows: Zoom camera in/out
     - C: Reset camera to initial position and orientation
-
-    Changes:
-    - Adjusted the initial position of the agent to be visible in the starting view.
     """
     pygame.init()
     display = (800, 600)
@@ -37,8 +39,8 @@ def main():
     
     player = Player((0, 0, 0))
     camera = Camera()
-    # Place the agent 40 units away on the z-axis (4 grid squares) and centered on x-axis
-    agent = Agent((0, 0, 40))
+    # Place the agent 40 units away on the z-axis (4 grid squares in front) and centered on x-axis
+    agent = Agent((0, 0, -40))
     
     setup_lighting()
     
