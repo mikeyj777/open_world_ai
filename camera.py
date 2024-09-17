@@ -1,4 +1,6 @@
 import math
+from OpenGL.GL import *
+from OpenGL.GLU import *
 
 class Camera:
     """
@@ -9,10 +11,9 @@ class Camera:
         height (float): Height above the player.
         rot_x (float): Vertical rotation (pitch).
         rot_y (float): Horizontal rotation (yaw).
-        initial_distance (float): Initial distance from the player.
-        initial_height (float): Initial height above the player.
-        min_distance (float): Minimum zoom distance.
-        max_distance (float): Maximum zoom distance.
+        fov (float): Field of view in degrees.
+        min_fov (float): Minimum field of view.
+        max_fov (float): Maximum field of view.
 
     Coordinate system:
     - Positive X: right
@@ -21,14 +22,13 @@ class Camera:
     """
 
     def __init__(self, distance=5, height=2):
-        self.initial_distance = distance
-        self.initial_height = height
         self.distance = distance
         self.height = height
         self.rot_x = 15  # Initial downward tilt
         self.rot_y = 0   # Initial horizontal rotation (facing positive z-axis)
-        self.min_distance = 3  # Minimum zoom distance
-        self.max_distance = 200  # Maximum zoom distance
+        self.fov = 45.0
+        self.min_fov = 10.0
+        self.max_fov = 120.0
 
     def rotate(self, dx, dy):
         """
@@ -46,22 +46,34 @@ class Camera:
 
     def zoom(self, amount):
         """
-        Adjust the camera's zoom level.
+        Adjust the camera's zoom level by changing the field of view.
 
         Args:
             amount (float): The amount to zoom in (negative) or out (positive).
         """
-        self.distance += amount
-        self.distance = max(self.min_distance, min(self.max_distance, self.distance))
+        self.fov += amount
+        self.fov = max(self.min_fov, min(self.max_fov, self.fov))
+        self.update_projection()
+
+    def update_projection(self):
+        """
+        Update the projection matrix based on the current field of view.
+        """
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(self.fov, 800/600, 0.1, 2000.0)  # Assuming 800x600 window size
+        glMatrixMode(GL_MODELVIEW)
 
     def reset(self):
         """
         Reset the camera to its initial state and align with positive z-axis.
         """
-        self.distance = self.initial_distance
-        self.height = self.initial_height
+        self.distance = 5
+        self.height = 2
         self.rot_x = 15  # Slight downward tilt
         self.rot_y = 0   # Facing positive z-axis (forward)
+        self.fov = 45.0
+        self.update_projection()
 
     def get_position(self, player_pos):
         """

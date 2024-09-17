@@ -35,13 +35,12 @@ def main():
     display = (800, 600)
     pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL)
     
-    gluPerspective(45, (display[0] / display[1]), 0.1, 2000.0)
-    
     player = Player((0, 0, 0))
     camera = Camera()
     agent = Agent((0, 0, -40))
     
     setup_lighting()
+    camera.update_projection()  # Set initial projection
     
     clock = pygame.time.Clock()
     
@@ -76,9 +75,9 @@ def main():
         # Handle camera rotation and zoom
         if mods & pygame.KMOD_SHIFT:
             if keys[pygame.K_UP]:
-                camera.zoom(0.1)  # Zoom out
+                camera.zoom(-2)  # Zoom in
             elif keys[pygame.K_DOWN]:
-                camera.zoom(-0.1)  # Zoom in
+                camera.zoom(2)  # Zoom out
         else:
             if keys[pygame.K_UP]:
                 camera.rotate(0, -1)  # Rotate camera vertically
@@ -92,7 +91,7 @@ def main():
         draw_scene(player, camera, agent)
         
         # Render coordinate display
-        coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f} Rot: {player.rot:.2f}"
+        coords = f"X: {player.pos.x:.2f} Y: {player.pos.y:.2f} Z: {player.pos.z:.2f} Rot: {player.rot:.2f} FOV: {camera.fov:.1f}"
         render_text(coords, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
         
         pygame.display.flip()
