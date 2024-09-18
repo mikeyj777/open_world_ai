@@ -1,5 +1,7 @@
 import random
 
+from consts import Consts
+
 class Resources: 
     """
     Represents a group of resources that agents can generate, metabolize, and share.
@@ -15,9 +17,10 @@ class Resources:
     """
 
     TYPES = ["sugar", "spice", "grain", "water", "oil"]
+    _MAX_RESOURCE = Consts.MAX_AMOUNT_OF_ANY_RESOURCE
 
     def __init__(self):
-        self.amount = {resource_type: random.uniform(5.0, 15.0) for resource_type in self.TYPES}
+        self.amount = {resource_type: random.uniform(5.0, self._MAX_RESOURCE) for resource_type in self.TYPES}
 
     def generate(self, resource_type, amount):
         """
@@ -29,6 +32,7 @@ class Resources:
         """
         if resource_type in self.TYPES:
             self.amount[resource_type] += amount
+            self.amount[resource_type] = min(self._MAX_RESOURCE, self.amount[resource_type])
 
     def metabolize(self, resource_type, amount):
         """
@@ -41,8 +45,9 @@ class Resources:
         Returns:
             bool: True if there was enough resource to metabolize, False otherwise.
         """
-        if resource_type in self.TYPES and self.amount[resource_type] >= amount:
+        if resource_type in self.TYPES:
             self.amount[resource_type] -= amount
+            self.amount[resource_type] = max(0.0, self.amount[resource_type])
             return True
         return False
 

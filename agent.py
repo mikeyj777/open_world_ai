@@ -43,7 +43,7 @@ class Agent:
             dt (float): Time step for the update.
         """
         self._share_resources()
-        self._move()
+        self._move(dt)
 
     def _move(self, dt):
         """

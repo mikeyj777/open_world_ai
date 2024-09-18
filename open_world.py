@@ -141,8 +141,8 @@ def main():
         glPopMatrix()
         
         # Render information display
-        info = f"Agents: {len(agents)} | FPS: {clock.get_fps():.2f}"
-        render_text(info, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
+        # info = f"Agents: {len(agents)} | FPS: {clock.get_fps():.2f}"
+        # render_text(info, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
         
         pygame.display.flip()
 
