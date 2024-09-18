@@ -10,9 +10,7 @@ from camera import Camera
 from agent import Agent
 from graphics import *
 from consts import Consts
-
-# type suggest agent
-agent:Agent
+from dashboard import Dashboard
 
 def create_initial_agents(num_agents):
     """
@@ -42,10 +40,7 @@ def check_and_create_connections(agents):
     """
     for i, agent in enumerate(agents):
         for other_agent in agents[i+1:]:
-            # agents in close proximity will be tested for connectivity.
-            # if agent can connect, call the connect method for the agent with the receptor and other agent as arguments
             agent.connect_if_possible(other_agent)
-            
 
 def update_agents(agents, dt):
     """
@@ -75,7 +70,6 @@ def update_agents(agents, dt):
         
         i += 1
 
-    print(f'min resources: {min_resources} at agent {min_idx}')
     return agents
 
 def main():
@@ -83,17 +77,27 @@ def main():
     Main function to set up and run the 3D world simulation with multiple agents.
     """
     pygame.init()
-    display = (800, 600)
-    pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL)
+    main_display = (800, 600)
+    dashboard_display = (800, 200)
+    total_height = main_display[1] + dashboard_display[1]
     
+    # Set up a single window with space for both OpenGL and Pygame
+    screen = pygame.display.set_mode((main_display[0], total_height), pygame.DOUBLEBUF | pygame.OPENGL)
+    
+    # Now initialize the camera and update projection
     camera = Camera()
-    camera.update_projection()  # Set initial projection
+    camera.update_projection()
+    
+    # Create a separate surface for the dashboard
+    dashboard_surface = pygame.Surface(dashboard_display)
     
     agents = create_initial_agents(50)  # Start with 50 agents
     
     setup_lighting()
     
     clock = pygame.time.Clock()
+    
+    dashboard = Dashboard(dashboard_display[0], dashboard_display[1])
     
     while True:
         for event in pygame.event.get():
@@ -105,6 +109,10 @@ def main():
                     camera.reset()
                 elif event.key == pygame.K_t:
                     camera.toggle_top_down()
+                elif event.key == pygame.K_LEFT:
+                    dashboard.scroll(-1, len(agents))
+                elif event.key == pygame.K_RIGHT:
+                    dashboard.scroll(1, len(agents))
 
         keys = pygame.key.get_pressed()
         mods = pygame.key.get_mods()
@@ -131,7 +139,8 @@ def main():
         check_and_create_connections(agents)
         agents = update_agents(agents, dt)
         
-        # Render the scene
+        # Render the main scene
+        glViewport(0, dashboard_display[1], main_display[0], main_display[1])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
         glPushMatrix()
@@ -149,10 +158,39 @@ def main():
         
         glPopMatrix()
         
-        # Render information display
-        # info = f"Agents: {len(agents)} | FPS: {clock.get_fps():.2f}"
-        # render_text(info, Consts.COORD_DISPLAY_ANCHOR_X, Consts.COORD_DISPLAY_ANCHOR_Y)
+        # Update and render the dashboard
+        dashboard.update(agents)
+        dashboard_surface.blit(dashboard.surface, (0, 0))
         
+        # Switch to 2D mode for drawing the dashboard
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        glOrtho(0, main_display[0], 0, total_height, -1, 1)
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+        
+        # Disable depth testing and lighting for 2D rendering
+        glDisable(GL_DEPTH_TEST)
+        glDisable(GL_LIGHTING)
+        
+        # Draw the dashboard
+        glRasterPos2f(0, 0)
+        dashboard_data = pygame.image.tostring(dashboard_surface, "RGB", True)
+        glDrawPixels(dashboard_display[0], dashboard_display[1], GL_RGB, GL_UNSIGNED_BYTE, dashboard_data)
+        
+        # Re-enable 3D rendering settings
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_LIGHTING)
+        
+        # Restore the 3D projection and modelview matrices
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+        glPopMatrix()
+        
+        # Swap the buffers to display everything
         pygame.display.flip()
 
 if __name__ == "__main__":

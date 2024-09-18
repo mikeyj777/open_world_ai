@@ -21,13 +21,13 @@ class Camera:
     def __init__(self, distance=5, height=2):
         self.distance = distance
         self.height = height
-        self.rot_x = 15  # Initial downward tilt
-        self.rot_y = 0   # Initial horizontal rotation (facing positive z-axis)
-        self.fov = 45.0
+        self.rot_x = -90  # Start with top-down view
+        self.rot_y = 0
+        self.fov = 90.0  # Increased FOV for wider view
         self.min_fov = 10.0
         self.max_fov = 120.0
-        self.top_down = False
-        self.top_down_height = 100  # Height for top-down view
+        self.top_down = True  # Start in top-down view
+        self.top_down_height = 75  # Increased height for top-down view
 
     def rotate(self, dx, dy):
         """
@@ -60,14 +60,14 @@ class Camera:
 
     def reset(self):
         """
-        Reset the camera to its initial state and align with positive z-axis.
+        Reset the camera to its initial state (top-down view).
         """
         self.distance = 5
-        self.height = 2
-        self.rot_x = 15  # Slight downward tilt
-        self.rot_y = 0   # Facing positive z-axis (forward)
-        self.fov = 45.0
-        self.top_down = False
+        self.height = self.top_down_height
+        self.rot_x = -90  # Top-down view
+        self.rot_y = 0
+        self.fov = 90.0
+        self.top_down = True
         self.update_projection()
 
     def toggle_top_down(self):
@@ -78,9 +78,12 @@ class Camera:
         if self.top_down:
             self.rot_x = -90  # Look straight down
             self.rot_y = 0
-            self.height = 10
+            self.height = self.top_down_height
         else:
-            self.reset()  # Return to normal view
+            self.rot_x = 15  # Slight downward tilt
+            self.rot_y = 0
+            self.height = 2
+        self.update_projection()
 
     def get_position(self, player_pos):
         """
