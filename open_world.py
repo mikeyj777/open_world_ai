@@ -7,8 +7,11 @@ import random
 
 from camera import Camera
 from agent import Agent
-from graphics import setup_lighting, render_text
+from graphics import *
 from consts import Consts
+
+# type suggest agent
+agent:Agent
 
 def create_initial_agents(num_agents):
     """
@@ -38,16 +41,10 @@ def check_and_create_connections(agents):
     """
     for i, agent in enumerate(agents):
         for other_agent in agents[i+1:]:
-            if len(agent.connected_agents) < len(agent.receptors) and \
-               len(other_agent.connected_agents) < len(other_agent.receptors):
-                for receptor in agent.receptors:
-                    for other_receptor in other_agent.receptors:
-                        if receptor.can_connect(other_receptor):
-                            agent.connected_agents.append(other_agent)
-                            other_agent.connected_agents.append(agent)
-                            break
-                    if other_agent in agent.connected_agents:
-                        break
+            # agents in close proximity will be tested for connectivity.
+            # if agent can connect, call the connect method for the agent with the receptor and other agent as arguments
+            agent.connect_if_possible(other_agent)
+            
 
 def update_agents(agents, dt):
     """
@@ -60,16 +57,17 @@ def update_agents(agents, dt):
     Returns:
         list: Updated list of agents with dead ones removed.
     """
-    alive_agents = []
-    for agent in agents:
+    i = 0
+    while i < len(agents):
+        agent = agents[i]
+        agent.manage_resources()
+        if not agent.is_alive:
+            del agents[i]
+            continue
         agent.update(dt)
-        if agent.resources.get_amount("sugar") > 0 and agent.resources.get_amount("spice") > 0:  # Simplified death check
-            alive_agents.append(agent)
-        else:
-            # Remove connections to this agent
-            for connected_agent in agent.connected_agents:
-                connected_agent.connected_agents.remove(agent)
-    return alive_agents
+        
+        i += 1
+    return agents
 
 def main():
     """

@@ -1,12 +1,17 @@
 import random
 
-class Resource:
+class Resources: 
     """
-    Represents a resource that agents can generate, metabolize, and share.
+    Represents a group of resources that agents can generate, metabolize, and share.
 
     Attributes:
         types (list): List of available resource types.
         amount (dict): Dictionary holding the amount of each resource type.
+
+    Methods:
+        generate(self, resource_type, amount)
+        metabolize(self, resource_type, amount)
+        get_resource_levels(self)
     """
 
     TYPES = ["sugar", "spice", "grain", "water", "oil"]
@@ -41,6 +46,15 @@ class Resource:
             return True
         return False
 
+    def get_resource_levels(self):
+        """
+        Get the current amount of each resource type.
+
+        Returns:
+            dict: A dictionary of resource types and their amounts.
+        """
+        return self.amount
+    
     def get_amount(self, resource_type):
         """
         Get the current amount of a specific resource type.
