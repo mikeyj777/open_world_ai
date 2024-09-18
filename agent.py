@@ -1,6 +1,8 @@
+import copy
 import random
 import math
 import uuid
+import time
 from pygame.math import Vector3
 from OpenGL.GL import *
 
@@ -27,8 +29,10 @@ class Agent:
         self.receptors = self._generate_receptors()
         self.resources = Resources()
         self.connected_agents = []
-        self.is_bad = random.random() < 0.05  # 5% chance of being a bad agent
+        self.is_bad = random.random() < Consts.AGENT_CHANCE_OF_BEING_BAD  # chance of being a bad agent (strips resources from neighbors. can backfire.)
         self.velocity = Vector3(random.uniform(-1, 1), 0, random.uniform(-1, 1)).normalize()
+        self.color = random.choice(list(Consts.AGENT_COLORS.keys()))
+        self.color_rgb = Consts.AGENT_COLORS[self.color]
         self.is_alive = True
 
     def _generate_receptors(self):
@@ -103,7 +107,7 @@ class Agent:
             other_agent (Agent): The agent to strip resources from.
             resource_type (str): The type of resource to strip.
         """
-        amount = min(0.01, other_agent.resources.get_amount(resource_type))
+        amount = min(2, other_agent.resources.get_amount(resource_type))
         other_agent.resources.metabolize(resource_type, amount)
         self.resources.generate(resource_type, amount)
 
@@ -141,16 +145,30 @@ class Agent:
         self.receptors.clear()
         self.connected_agents.clear()
         self.is_alive = False
+        
+    def flash_x_times(self, x):
+        orig_rgb = copy.deepcopy(self.color_rgb)
+        for _ in range(x):
+            self.color_rgb = (255,255,255)
+            self.draw()
+            time.sleep(0.1)
+            self.color_rgb = orig_rgb
+            self.draw()
+            time.sleep(0.1)
 
     def draw(self):
         """
         Draw the agent as a cube in the 3D world.
         """
+        glDisable(GL_LIGHTING)  # Disable lighting for the cube
         glPushMatrix()
         glTranslatef(self.pos.x, self.pos.y, self.pos.z)
         
         # Draw a cube to represent the agent
-        glColor3f(0.0, 0.0, 1.0)  # Blue color
+        r = self.color_rgb[0]
+        g = self.color_rgb[1]
+        b = self.color_rgb[2]
+        glColor3f(r, g, b)  # Set the color
         glBegin(GL_QUADS)
         # Front face
         glVertex3f(-0.5, -0.5, 0.5)
@@ -185,6 +203,7 @@ class Agent:
         glEnd()
         
         glPopMatrix()
+        glEnable(GL_LIGHTING)
 
     def connect_if_possible(self, other_agent):
         """
@@ -197,6 +216,9 @@ class Agent:
 
         if other_agent in self.connected_agents:
             return
+        
+        # if other_agent.color != self.color:
+        #     return
         
         direction = self.pos - other_agent.pos
         distance = direction.length()

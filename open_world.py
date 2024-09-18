@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
 import random
+import numpy as np
 
 from camera import Camera
 from agent import Agent
@@ -58,15 +59,23 @@ def update_agents(agents, dt):
         list: Updated list of agents with dead ones removed.
     """
     i = 0
+    min_resources = np.inf
     while i < len(agents):
         agent = agents[i]
         agent.manage_resources()
+        resources = agent.resources.get_resource_levels()
+        tot_resources = sum(resources.values())
+        if tot_resources < min_resources:
+            min_resources = tot_resources
+            min_idx = i
         if not agent.is_alive:
             del agents[i]
             continue
         agent.update(dt)
         
         i += 1
+
+    print(f'min resources: {min_resources} at agent {min_idx}')
     return agents
 
 def main():

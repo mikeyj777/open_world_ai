@@ -78,6 +78,7 @@ class Camera:
         if self.top_down:
             self.rot_x = -90  # Look straight down
             self.rot_y = 0
+            self.height = 10
         else:
             self.reset()  # Return to normal view
 
