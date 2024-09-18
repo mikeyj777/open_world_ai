@@ -16,11 +16,6 @@ class Camera:
         max_fov (float): Maximum field of view.
         top_down (bool): Whether the camera is in top-down view mode.
         top_down_height (float): Height of the camera in top-down view.
-
-    Coordinate system:
-    - Positive X: right
-    - Positive Y: up
-    - Positive Z: forward (into the screen/field of view)
     """
 
     def __init__(self, distance=5, height=2):

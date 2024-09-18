@@ -7,7 +7,122 @@ from resource import Resource
 from consts import Consts
 
 class Agent:
-    # ... (previous code remains the same)
+    """
+    Represents an agent in the 3D world simulation.
+
+    Attributes:
+        pos (Vector3): The position of the agent in 3D space.
+        receptors (list): List of Receptor objects.
+        resources (Resource): Resource object managing the agent's resources.
+        connected_agents (list): List of connected Agent objects.
+        is_bad (bool): Whether the agent is a "bad" agent.
+        velocity (Vector3): The agent's current velocity.
+    """
+
+    def __init__(self, pos):
+        self.pos = Vector3(pos)
+        self.receptors = self._generate_receptors()
+        self.resources = Resource()
+        self.connected_agents = []
+        self.is_bad = random.random() < 0.05  # 5% chance of being a bad agent
+        self.velocity = Vector3(random.uniform(-1, 1), 0, random.uniform(-1, 1)).normalize()
+
+    def _generate_receptors(self):
+        num_receptors = max(0, int(random.gauss(5, 3)))
+        return [Receptor() for _ in range(num_receptors)]
+
+    def update(self, dt):
+        """
+        Update the agent's state, including movement and resource management.
+
+        Args:
+            dt (float): Time step for the update.
+        """
+        self._move(dt)
+        self._manage_resources()
+        self._share_resources()
+
+    def _move(self, dt):
+        """
+        Move the agent within the circular field, bouncing off the boundaries.
+
+        Args:
+            dt (float): Time step for the movement.
+        """
+        new_pos = self.pos + self.velocity * dt
+
+        # Check if the new position is outside the circular field
+        distance_to_center = (new_pos - Vector3(Consts.AGENT_FIELD_CENTER)).length()
+        if distance_to_center > Consts.AGENT_FIELD_RADIUS:
+            # Calculate the normal vector at the point of collision
+            normal = (new_pos - Vector3(Consts.AGENT_FIELD_CENTER)).normalize()
+            # Reflect the velocity vector
+            self.velocity = self.velocity.reflect(normal)
+            new_pos = self.pos + self.velocity * dt
+
+        self.pos = new_pos
+
+    def _manage_resources(self):
+        """
+        Manage the agent's resources, including generation and metabolism.
+        """
+        for resource_type in Resource.TYPES:
+            if random.random() < 0.1:  # 10% chance to generate each resource
+                self.resources.generate(resource_type, random.uniform(0.1, 0.3))
+            if random.random() < 0.2:  # 20% chance to metabolize each resource
+                self.resources.metabolize(resource_type, 0.1)
+
+        # Check if the agent should die
+        if sum(1 for r in Resource.TYPES if self.resources.get_amount(r) < 0.1) >= 2:
+            self._die()
+
+    def _share_resources(self):
+        """
+        Share resources with connected agents.
+        """
+        for connected_agent in self.connected_agents:
+            for resource_type in Resource.TYPES:
+                if self.is_bad:
+                    self._strip_resources(connected_agent, resource_type)
+                else:
+                    self._balance_resources(connected_agent, resource_type)
+
+    def _strip_resources(self, other_agent, resource_type):
+        """
+        Strip resources from the connected agent (bad agent behavior).
+
+        Args:
+            other_agent (Agent): The agent to strip resources from.
+            resource_type (str): The type of resource to strip.
+        """
+        amount = min(0.01, other_agent.resources.get_amount(resource_type))
+        other_agent.resources.metabolize(resource_type, amount)
+        self.resources.generate(resource_type, amount)
+
+    def _balance_resources(self, other_agent, resource_type):
+        """
+        Balance resources with the connected agent (normal agent behavior).
+
+        Args:
+            other_agent (Agent): The agent to balance resources with.
+            resource_type (str): The type of resource to balance.
+        """
+        my_amount = self.resources.get_amount(resource_type)
+        other_amount = other_agent.resources.get_amount(resource_type)
+
+        if my_amount > other_amount + 2:
+            transfer = min(0.01, my_amount - other_amount - 2)
+            self.resources.metabolize(resource_type, transfer)
+            other_agent.resources.generate(resource_type, transfer)
+
+    def _die(self):
+        """
+        Handle the death of the agent.
+        """
+        for connected_agent in self.connected_agents:
+            connected_agent.connected_agents.remove(self)
+        self.connected_agents.clear()
+        # Additional logic for removing the agent from the simulation would go here
 
     def draw(self):
         """
@@ -19,7 +134,36 @@ class Agent:
         # Draw a cube to represent the agent
         glColor3f(0.0, 0.0, 1.0)  # Blue color
         glBegin(GL_QUADS)
-        # ... (cube drawing code remains the same)
+        # Front face
+        glVertex3f(-0.5, -0.5, 0.5)
+        glVertex3f(0.5, -0.5, 0.5)
+        glVertex3f(0.5, 0.5, 0.5)
+        glVertex3f(-0.5, 0.5, 0.5)
+        # Back face
+        glVertex3f(-0.5, -0.5, -0.5)
+        glVertex3f(-0.5, 0.5, -0.5)
+        glVertex3f(0.5, 0.5, -0.5)
+        glVertex3f(0.5, -0.5, -0.5)
+        # Top face
+        glVertex3f(-0.5, 0.5, -0.5)
+        glVertex3f(-0.5, 0.5, 0.5)
+        glVertex3f(0.5, 0.5, 0.5)
+        glVertex3f(0.5, 0.5, -0.5)
+        # Bottom face
+        glVertex3f(-0.5, -0.5, -0.5)
+        glVertex3f(0.5, -0.5, -0.5)
+        glVertex3f(0.5, -0.5, 0.5)
+        glVertex3f(-0.5, -0.5, 0.5)
+        # Right face
+        glVertex3f(0.5, -0.5, -0.5)
+        glVertex3f(0.5, 0.5, -0.5)
+        glVertex3f(0.5, 0.5, 0.5)
+        glVertex3f(0.5, -0.5, 0.5)
+        # Left face
+        glVertex3f(-0.5, -0.5, -0.5)
+        glVertex3f(-0.5, -0.5, 0.5)
+        glVertex3f(-0.5, 0.5, 0.5)
+        glVertex3f(-0.5, 0.5, -0.5)
         glEnd()
         
         glPopMatrix()

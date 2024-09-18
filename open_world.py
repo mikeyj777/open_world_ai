@@ -1,17 +1,75 @@
-import random
-import math
-
 import pygame
 from pygame.math import Vector3
 from OpenGL.GL import *
 from OpenGL.GLU import *
-
+import math
+import random
 
 from camera import Camera
-from player import Player
 from agent import Agent
-from graphics import setup_lighting, draw_scene, render_text
+from graphics import setup_lighting, render_text
 from consts import Consts
+
+def create_initial_agents(num_agents):
+    """
+    Create initial set of agents within the circular field.
+
+    Args:
+        num_agents (int): Number of agents to create.
+
+    Returns:
+        list: List of created Agent objects.
+    """
+    agents = []
+    for _ in range(num_agents):
+        angle = random.uniform(0, 2 * math.pi)
+        radius = random.uniform(0, Consts.AGENT_FIELD_RADIUS)
+        x = Consts.AGENT_FIELD_CENTER[0] + radius * math.cos(angle)
+        z = Consts.AGENT_FIELD_CENTER[2] + radius * math.sin(angle)
+        agents.append(Agent((x, 0, z)))
+    return agents
+
+def check_and_create_connections(agents):
+    """
+    Check for potential connections between agents and create them if possible.
+
+    Args:
+        agents (list): List of all agents in the simulation.
+    """
+    for i, agent in enumerate(agents):
+        for other_agent in agents[i+1:]:
+            if len(agent.connected_agents) < len(agent.receptors) and \
+               len(other_agent.connected_agents) < len(other_agent.receptors):
+                for receptor in agent.receptors:
+                    for other_receptor in other_agent.receptors:
+                        if receptor.can_connect(other_receptor):
+                            agent.connected_agents.append(other_agent)
+                            other_agent.connected_agents.append(agent)
+                            break
+                    if other_agent in agent.connected_agents:
+                        break
+
+def update_agents(agents, dt):
+    """
+    Update all agents and remove dead ones.
+
+    Args:
+        agents (list): List of all agents in the simulation.
+        dt (float): Time step for the update.
+
+    Returns:
+        list: Updated list of agents with dead ones removed.
+    """
+    alive_agents = []
+    for agent in agents:
+        agent.update(dt)
+        if agent.resources.get_amount("sugar") > 0 and agent.resources.get_amount("spice") > 0:  # Simplified death check
+            alive_agents.append(agent)
+        else:
+            # Remove connections to this agent
+            for connected_agent in agent.connected_agents:
+                connected_agent.connected_agents.remove(agent)
+    return alive_agents
 
 def main():
     """
